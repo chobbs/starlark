@@ -1,0 +1,18 @@
+- defaultTab: nodes
+  description: ''
+  executionEnabled: true
+  id: 0ed6f500-02e8-4360-be40-7d509d332dd3
+  loglevel: INFO
+  name: 'List Docker Containers '
+  nodeFilterEditable: false
+  plugins:
+    ExecutionLifecycle: {}
+  scheduleEnabled: true
+  schedules: []
+  sequence:
+    commands:
+    - exec: sudo docker ps
+    keepgoing: false
+    strategy: node-first
+  uuid: 0ed6f500-02e8-4360-be40-7d509d332dd3
+
