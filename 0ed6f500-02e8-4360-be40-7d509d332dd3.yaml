@@ -14,5 +14,6 @@
     - exec: sudo docker ps
     keepgoing: false
     strategy: node-first
+  tags: docker
   uuid: 0ed6f500-02e8-4360-be40-7d509d332dd3
 
