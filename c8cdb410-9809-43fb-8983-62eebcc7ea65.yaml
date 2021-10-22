@@ -18,7 +18,7 @@
     value: python --version
   - label: disposable_container
     name: disposable_container
-    value: alpine
+    value: python:latest
     values:
     - alpine
     - python:latest
@@ -48,7 +48,7 @@
       type: docker-container-execute-command
     - configuration:
         cycles: '1'
-        interval: 2m
+        interval: 45s
         progress: 'true'
       description: wait
       nodeStep: true
