@@ -1,0 +1,117 @@
+- defaultTab: nodes
+  description: "Create Disposable Executor from PagerDuty\n# How this Runbook works:\n\
+    1. This is triggered from a PagerDuty alert\n2. Webhook will provide an incident\
+    \ to the input option\n3. Webhook will provide docker tool image to the input\
+    \ option\n4. The job is executed locally on the Rundeck server, using the passed\
+    \ docker image\n- See the ReadMe for how to demo this Runbook\n---\n### How To\
+    \ Demo This Runbook\n1. This job is meant to be used as a reference-job from within\
+    \ larger workflows. "
+  executionEnabled: true
+  id: e300a870-02c3-4a18-87a9-ac6e1bb56435
+  loglevel: INFO
+  name: Disposable Executor
+  nodeFilterEditable: false
+  options:
+  - hidden: true
+    label: disposable_container
+    name: disposable_container
+    value: alpine
+    values:
+    - alpine
+    - python:latest
+    valuesListDelimiter: ','
+  - label: pd_incident_id
+    name: pd_incident_id
+  plugins:
+    ExecutionLifecycle: {}
+  scheduleEnabled: true
+  schedules: []
+  sequence:
+    commands:
+    - configuration:
+        api_token: LsjBSn9vpuqB8r5SLPjs
+        email: chobbs@pagerduty.com
+        incident_id: ${option.pd_incident_id}
+        note: 'Createing Disposable Executor : \n\nRundeck URL: ${job.url}#show'
+      description: 'Adding disposable node '
+      nodeStep: false
+      type: pd-note-step
+    - configuration:
+        command: tail -f /dev/null
+        debug: 'true'
+        detach: 'true'
+        image: ${option.disposable_container}
+        name: ${job.id}
+        rm: 'true'
+      nodeStep: true
+      type: docker-run-workflow-step
+    - configuration:
+        command: df -k
+        container: ${job.id}
+        debug: 'false'
+        user: root
+      nodeStep: true
+      plugins:
+        LogFilter:
+        - config:
+            hideOutput: 'false'
+            logData: 'true'
+            name: command
+            regex: ^(.+)
+          type: key-value-data-multilines
+      type: docker-container-execute-command
+    - configuration:
+        api_token: LsjBSn9vpuqB8r5SLPjs
+        email: chobbs@pagerduty.com
+        incident_id: ${option.pd_incident_id}
+        note: 'Docker Command: \n${data.command*}\n\nRundeck URL: ${job.url}#show'
+      description: Adding docker exec to incident
+      nodeStep: false
+      type: pd-note-step
+    - configuration:
+        command: docker ps -a
+      description: check docker running
+      nodeStep: true
+      type: localexec
+    - configuration:
+        cycles: '1'
+        interval: 40s
+        progress: 'false'
+      description: waiting X
+      nodeStep: true
+      type: nixy-waitfor-sleep-workflow-node-step
+    - configuration:
+        container: ${job.id}
+        debug: 'false'
+        signal: KILL
+      description: dispose of this
+      nodeStep: true
+      type: docker-container-kill-step
+    - configuration:
+        api_token: LsjBSn9vpuqB8r5SLPjs
+        email: chobbs@pagerduty.com
+        incident_id: ${option.pd_incident_id}
+        note: Rundeck Workflow Complete.
+      description: Adding docker complete to incident
+      nodeStep: false
+      type: pd-note-step
+    - configuration:
+        cycles: '1'
+        interval: 10s
+        progress: 'false'
+      description: waiting X
+      nodeStep: true
+      type: nixy-waitfor-sleep-workflow-node-step
+    - configuration:
+        api_token: LsjBSn9vpuqB8r5SLPjs
+        email: chobbs@pagerduty.com
+        incident_id: ${option.pd_incident_id}
+        resolution: 'Disposed of Docker Container : \n\nRundeck URL: ${job.url}#show'
+        status: resolved
+      nodeStep: false
+      type: pd-update-incident-step
+    keepgoing: false
+    strategy: node-first
+  tags: docker
+  uuid: e300a870-02c3-4a18-87a9-ac6e1bb56435
+
