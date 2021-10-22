@@ -1,0 +1,66 @@
+- defaultTab: nodes
+  description: "Create Disposable Executor from PagerDuty\n# How this Runbook works:\n\
+    1. Provide an `command` to the input option\n2. Provide docker image to the input\
+    \ option\n3. The command is executed in the docker container on the Rundeck server,\
+    \ using the passed docker image\n- See the ReadMe for how to demo this Runbook\n\
+    ---\n### How To Demo This Runbook\n1. Explain how a indiviaul user would inout\
+    \ options into the Rundeck UI or supply via the API \n2. Provide an `command`\
+    \ and image for input options\n3. This job is meant to be used as a individual\
+    \ job and not within larger workflows. "
+  executionEnabled: true
+  id: c8cdb410-9809-43fb-8983-62eebcc7ea65
+  loglevel: INFO
+  name: Disposable Executor Cmd
+  nodeFilterEditable: false
+  options:
+  - label: command
+    name: command
+    value: python --version
+  - label: disposable_container
+    name: disposable_container
+    value: alpine
+    values:
+    - alpine
+    - python:latest
+    valuesListDelimiter: ','
+  plugins:
+    ExecutionLifecycle: {}
+  scheduleEnabled: true
+  schedules: []
+  sequence:
+    commands:
+    - configuration:
+        command: tail -f /dev/null
+        debug: 'true'
+        detach: 'true'
+        image: ${option.disposable_container}
+        name: ${job.id}
+        rm: 'true'
+      nodeStep: true
+      type: docker-run-workflow-step
+    - configuration:
+        command: ${option.command}
+        container: ${job.id}
+        debug: 'false'
+        user: root
+      description: command
+      nodeStep: true
+      type: docker-container-execute-command
+    - configuration:
+        cycles: '1'
+        interval: 2m
+        progress: 'true'
+      description: wait
+      nodeStep: true
+      type: nixy-waitfor-sleep-workflow-node-step
+    - configuration:
+        container: ${job.id}
+        debug: 'false'
+        signal: KILL
+      nodeStep: true
+      type: docker-container-kill-step
+    keepgoing: false
+    strategy: node-first
+  tags: docker
+  uuid: c8cdb410-9809-43fb-8983-62eebcc7ea65
+
